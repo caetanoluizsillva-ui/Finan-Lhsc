@@ -1117,30 +1117,6 @@ function renderizarTiposDespesa() {
     </div>`).join('');
 }
 
-// ==========================================
-// INIT E SW
-// ==========================================
-(function initApp() {
-    // Sempre inicia no mês e ano atuais — sem restaurar o que estava salvo
-    const hoje = new Date();
-    _mesSel = hoje.getMonth();
-    _anoSel = hoje.getFullYear();
-    // Salva só no localStorage puro (não passa pelo Firebase setData)
-    localStorage.setItem('cfg_mes', JSON.stringify(_mesSel));
-    localStorage.setItem('cfg_ano', JSON.stringify(_anoSel));
-    // Atualiza o header (DOM está pronto pois o script está no final do body)
-    _atualizarHeaderMes();
-    _atualizarDataHoje();
-    // Inicializa o módulo Firebase/Sync (assíncrono, não bloqueia o restante)
-    initFirebaseSync();
-})();
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', ()=>{
-        navigator.serviceWorker.register('sw.js')
-            .then(r=>console.log('SW:',r.scope)).catch(e=>console.log('SW err:',e));
-    });
-}
 
 // ==========================================
 // MELHORIAS DE FLUXO E TECLADO
@@ -1220,6 +1196,7 @@ function aplicarFluxoContinuo(nomeFuncao, idModal, prefixoCampos) {
 aplicarFluxoContinuo('salvarDespesa', 'modal-despesa', 'despesa');
 aplicarFluxoContinuo('salvarAPagar', 'modal-a-pagar', 'apagar');
 aplicarFluxoContinuo('salvarReceita', 'modal-receita', 'receita');
+
 // ==========================================
 // DASHBOARD - TELA ANÁLISE
 // ==========================================
@@ -2027,6 +2004,32 @@ if (typeof setData === 'function') {
         _setDataOrig(key, value);
         setTimeout(atualizarIconeNotificacao, 100);
     };
+}
+
+
+// ==========================================
+// INIT E SW (INICIALIZAÇÃO DO APP - MOVIDO PARA O FINAL)
+// ==========================================
+(function initApp() {
+    // Sempre inicia no mês e ano atuais — sem restaurar o que estava salvo
+    const hoje = new Date();
+    _mesSel = hoje.getMonth();
+    _anoSel = hoje.getFullYear();
+    // Salva só no localStorage puro (não passa pelo Firebase setData)
+    localStorage.setItem('cfg_mes', JSON.stringify(_mesSel));
+    localStorage.setItem('cfg_ano', JSON.stringify(_anoSel));
+    // Atualiza o header (DOM está pronto pois o script está no final do body)
+    _atualizarHeaderMes();
+    _atualizarDataHoje();
+    // Inicializa o módulo Firebase/Sync (assíncrono, não bloqueia o restante)
+    initFirebaseSync();
+})();
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', ()=>{
+        navigator.serviceWorker.register('sw.js')
+            .then(r=>console.log('SW:',r.scope)).catch(e=>console.log('SW err:',e));
+    });
 }
 
 // Inicializa notificações ao carregar
