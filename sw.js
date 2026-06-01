@@ -2,7 +2,7 @@
 // SERVICE WORKER - Offline First
 // v3 - Sis_Finan_v9
 // ==========================================
-const CACHE_NAME = 'financas-v9';
+const CACHE_NAME = 'financas-v10';
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -10,6 +10,8 @@ const STATIC_ASSETS = [
     './app.js',
     './firebase-config.js',
     './manifest.json',
+    './icon-192.png',
+    './icon-512.png',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
     'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'
 ];
@@ -77,4 +79,35 @@ self.addEventListener('message', event => {
     if (event.data === 'skipWaiting') {
         self.skipWaiting();
     }
+});
+
+// Responde a notificações push (background)
+self.addEventListener('push', event => {
+    const data = event.data ? event.data.json() : {};
+    const title = data.title || '💰 Sistema Financeiro LHSC';
+    const options = {
+        body: data.body || 'Você tem contas pendentes!',
+        icon: './icon-192.png',
+        badge: './icon-192.png',
+        tag: 'financas-notif',
+        renotify: false,
+        data: { url: data.url || './' }
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Ao clicar na notificação, abre o app
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+    const url = (event.notification.data && event.notification.data.url) || './';
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+            for (const c of list) {
+                if (c.url.includes('index.html') || c.url.endsWith('/')) {
+                    return c.focus();
+                }
+            }
+            return clients.openWindow(url);
+        })
+    );
 });

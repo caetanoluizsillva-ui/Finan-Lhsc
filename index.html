@@ -7,7 +7,15 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#3498db">
+    <meta name="theme-color" content="#2980b9">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Finanças">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
@@ -36,8 +44,25 @@
                 <span id="header-mes-label" onclick="abrirMesPicker()" title="Selecionar mês" style="cursor:pointer">Todos</span>
                 <button class="mes-nav-btn" onclick="navegarMes(1)"><i class="fas fa-chevron-right"></i></button>
             </div>
+            <div class="notif-btn-wrapper">
+                <button class="notif-btn" id="notif-btn" onclick="toggleNotifPanel()" title="Notificações">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-badge hidden" id="notif-badge">0</span>
+                </button>
+            </div>
             <button class="logout-btn" onclick="fazerLogout()"><i class="fas fa-sign-out-alt"></i> Sair</button>
         </header>
+
+        <!-- PAINEL DE NOTIFICAÇÕES FLUTUANTE -->
+        <div id="notif-panel" class="notif-panel hidden">
+            <div class="notif-panel-header">
+                <span><i class="fas fa-bell"></i> Notificações</span>
+                <button onclick="fecharNotifPanel()" class="notif-panel-close">&times;</button>
+            </div>
+            <div id="notif-panel-lista" class="notif-panel-lista">
+                <div class="notif-empty"><i class="fas fa-check-circle"></i><p>Nenhuma notificação pendente</p></div>
+            </div>
+        </div>
 
                 <!-- ANÁLISE -->
         <div id="content-analise" class="content-section">

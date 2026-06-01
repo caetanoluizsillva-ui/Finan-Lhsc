@@ -46,6 +46,7 @@ function mudarAba(nome, id, el) {
         configuracoes: renderizarConfiguracoes
     };
     if (renders[id]) renders[id]();
+    setTimeout(atualizarIconeNotificacao, 200);
 }
 
 function voltarParaAnalise() {
@@ -541,8 +542,24 @@ function marcarPago(id, valor) {
     if (idx === -1) return;
     lista[idx].pago   = valor;
     lista[idx].status = calcularStatus(lista[idx].vencimento, valor);
+    if (valor) {
+        // Registra a data de pagamento no mês atualmente selecionado
+        // Se há mês selecionado, usa o 1º dia desse mês como referência de contabilização
+        // Se não há filtro de mês, usa a data de hoje
+        if (_mesSel !== null) {
+            const ano = _anoSel;
+            const mes = String(_mesSel + 1).padStart(2, '0');
+            lista[idx].dataPagamento = `${ano}-${mes}-01`;
+        } else {
+            lista[idx].dataPagamento = new Date().toISOString().slice(0, 10);
+        }
+    } else {
+        // Ao desmarcar como pago, remove a data de pagamento
+        delete lista[idx].dataPagamento;
+    }
     setData('a_pagar', lista);
     renderizarAPagar();
+    atualizarIconeNotificacao();
     toast(valor ? 'Marcado como pago! ✓' : 'Revertido para pendente.', valor?'success':'info');
 }
 
@@ -569,15 +586,50 @@ function renderizarAPagar() {
         fCat.value = curCat;
     }
 
-    let lista = [...todosAPagar];
-
-    // Exibe apenas as contas do mês filtrado no topo
+    // Lógica de exibição:
+    // - VENCIDAS não pagas  → aparecem SEMPRE (independente do mês selecionado)
+    // - PENDENTES           → aparecem apenas no mês atual ou no mês selecionado
+    //                         (meses futuros só aparecem quando aquele mês for selecionado)
+    // - PAGAS               → aparecem apenas no mês em que foram pagas (ou vencimento)
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+    let lista;
     if (_mesSel !== null) {
+        // Mês específico selecionado
         const anoStr = String(_anoSel);
         const mesStr = String(_mesSel + 1).padStart(2, '0');
-        lista = lista.filter(x => x.vencimento && x.vencimento.startsWith(anoStr + '-' + mesStr));
+        const prefixo = anoStr + '-' + mesStr;
+        lista = todosAPagar.filter(x => {
+            if (x.status === 'pago') {
+                // Pagas: exibe pelo mês de pagamento ou vencimento
+                const refData = x.dataPagamento || x.vencimento || '';
+                return refData.startsWith(prefixo);
+            }
+            if (x.status === 'vencido') {
+                // Vencidas não pagas: sempre exibe
+                return true;
+            }
+            // Pendentes: exibe apenas se o vencimento é do mês selecionado
+            return (x.vencimento || '').startsWith(prefixo);
+        });
     } else {
-        lista = lista.filter(x => x.vencimento && x.vencimento.startsWith(String(_anoSel)));
+        // "Todos" selecionado: mostra vencidas + pendentes até o mês atual + pagas do ano
+        const anoAtual = hoje.getFullYear();
+        const mesAtual = hoje.getMonth(); // 0-11
+        const anoStr   = String(_anoSel);
+        lista = todosAPagar.filter(x => {
+            if (x.status === 'pago') {
+                const refData = x.dataPagamento || x.vencimento || '';
+                return refData.startsWith(anoStr);
+            }
+            if (x.status === 'vencido') {
+                return true;
+            }
+            // Pendentes: exibe apenas até o mês atual (não mostra meses futuros no "Todos")
+            if (!x.vencimento) return true;
+            const [aV, mV] = x.vencimento.split('-').map(Number);
+            return (aV < anoAtual) || (aV === anoAtual && (mV - 1) <= mesAtual);
+        });
     }
 
     const fStatus = document.getElementById('filtro-apagar-status');
@@ -585,7 +637,7 @@ function renderizarAPagar() {
     if (curStatus) lista = lista.filter(x => x.status === curStatus);
     if (curCat)  lista = lista.filter(x => x.categoriaId === curCat);
 
-    // O total soma o valor da tela perfeitamente!
+    // Total: soma apenas pendentes/vencidas (o que ainda falta pagar)
     const total = lista.filter(x => x.status !== 'pago').reduce((s, x) => s + x.valor, 0);
     const apagarTotalEl = document.getElementById('apagar-total');
     if (apagarTotalEl) apagarTotalEl.textContent = brl(total);
@@ -594,7 +646,7 @@ function renderizarAPagar() {
     if (!el) return;
     
     if (!lista.length) {
-        el.innerHTML = '<div class="registros-empty"><i class="fas fa-file-invoice-dollar"></i><p>Nenhuma despesa encontrada para este mês.</p></div>';
+        el.innerHTML = '<div class="registros-empty"><i class="fas fa-file-invoice-dollar"></i><p>Nenhuma despesa encontrada para o período.</p></div>';
         return;
     }
     
@@ -604,7 +656,14 @@ function renderizarAPagar() {
         vencido:  {label:'Vencido',  cls:'badge-vencido'}
     };
     
-    el.innerHTML = lista.sort((a,b)=>a.vencimento.localeCompare(b.vencimento)).map(r=>{
+    el.innerHTML = lista.sort((a,b) => {
+        // Vencidas primeiro, depois pendentes, depois pagas
+        const ordemStatus = { vencido: 0, pendente: 1, pago: 2 };
+        const oa = ordemStatus[a.status] ?? 1;
+        const ob = ordemStatus[b.status] ?? 1;
+        if (oa !== ob) return oa - ob;
+        return a.vencimento.localeCompare(b.vencimento);
+    }).map(r=>{
         const s = statusCfg[r.status]||statusCfg.pendente;
         const dataFmt = r.vencimento ? new Date(r.vencimento+'T00:00').toLocaleDateString('pt-BR') : '—';
         const parcelaTag = r.tipo==='Parcelado'&&r.parcelas>1 ? `<span class="reg-tipo-tag">📦 ${r.parcelas}x</span>` : '';
@@ -612,7 +671,7 @@ function renderizarAPagar() {
             ? `<button class="btn-pago-toggle btn-pago-sim" onclick="marcarPago('${r.id}',false)" title="Clique para reverter"><i class="fas fa-check-circle"></i> Pago</button>`
             : `<button class="btn-pago-toggle btn-pago-nao" onclick="marcarPago('${r.id}',true)" title="Marcar como pago"><i class="far fa-circle"></i> Pagar</button>`;
         return `
-    <div class="reg-item${r.status==='pago'?' reg-pago':''}" style="border-left:4px solid ${r.categoriaCor||'#95a5a6'}">
+    <div class="reg-item${r.status==='pago'?' reg-pago':''}" data-id="${r.id}" style="border-left:4px solid ${r.categoriaCor||'#95a5a6'}">
         <div class="reg-icon" style="background:${r.categoriaCor||'#95a5a6'}20;color:${r.categoriaCor||'#95a5a6'}">
             ${r.categoriaIcone||'🏷️'}
         </div>
@@ -1184,7 +1243,28 @@ function renderizarAnalise() {
     }
 
     const despPeriodo  = filtrarPeriodo(despesas, 'data');
-    const apagarPeriodo = filtrarPeriodo(apagar, 'vencimento').map(r => {
+    // Para contas a pagar: não pagas aparecem pelo vencimento; pagas pelo dataPagamento
+    const apagarPeriodo = (() => {
+        if (_mesSel !== null) {
+            const anoStr = String(_anoSel);
+            const mesStr = String(_mesSel + 1).padStart(2, '0');
+            const prefixo = anoStr + '-' + mesStr;
+            return apagar.filter(x => {
+                const s = calcularStatus(x.vencimento, x.pago||false);
+                if (s !== 'pago') return x.vencimento && x.vencimento.startsWith(prefixo);
+                const refData = x.dataPagamento || x.vencimento || '';
+                return refData.startsWith(prefixo);
+            });
+        } else {
+            const anoStr = String(_anoSel);
+            return apagar.filter(x => {
+                const s = calcularStatus(x.vencimento, x.pago||false);
+                if (s !== 'pago') return x.vencimento && x.vencimento.startsWith(anoStr);
+                const refData = x.dataPagamento || x.vencimento || '';
+                return refData.startsWith(anoStr);
+            });
+        }
+    })().map(r => {
         r.status = calcularStatus(r.vencimento, r.pago || false);
         return r;
     });
@@ -1726,3 +1806,238 @@ function exportarDadosJSON() {
     URL.revokeObjectURL(url);
     toast('Backup exportado!', 'success');
 }
+
+// =========================================
+// SISTEMA DE NOTIFICAÇÕES — CONTAS VENCIDAS
+// e contas com vencimento amanhã
+// =========================================
+
+function obterNotificacoes() {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const amanha = new Date(hoje);
+    amanha.setDate(amanha.getDate() + 1);
+
+    const todas = getData('a_pagar', []);
+    const notifs = [];
+
+    todas.forEach(r => {
+        if (r.pago) return;
+        const venc = new Date(r.vencimento + 'T00:00');
+        if (isNaN(venc)) return;
+
+        if (venc < hoje) {
+            // Vencida
+            const diasAtraso = Math.round((hoje - venc) / 86400000);
+            notifs.push({
+                id: r.id,
+                tipo: 'vencido',
+                titulo: r.descricao,
+                desc: `Venceu ${diasAtraso === 0 ? 'hoje' : diasAtraso === 1 ? 'ontem' : `há ${diasAtraso} dias`} (${formatarData(r.vencimento)})`,
+                valor: r.valor,
+                vencimento: r.vencimento
+            });
+        } else if (venc.getTime() === hoje.getTime()) {
+            // Vence hoje
+            notifs.push({
+                id: r.id,
+                tipo: 'hoje',
+                titulo: r.descricao,
+                desc: `Vence HOJE — ${formatarData(r.vencimento)}`,
+                valor: r.valor,
+                vencimento: r.vencimento
+            });
+        } else if (venc.getTime() === amanha.getTime()) {
+            // Vence amanhã
+            notifs.push({
+                id: r.id,
+                tipo: 'amanha',
+                titulo: r.descricao,
+                desc: `Vence amanhã — ${formatarData(r.vencimento)}`,
+                valor: r.valor,
+                vencimento: r.vencimento
+            });
+        }
+    });
+
+    // Ordena: vencidos primeiro, depois hoje, depois amanhã
+    const ordem = { vencido: 0, hoje: 1, amanha: 2 };
+    notifs.sort((a, b) => ordem[a.tipo] - ordem[b.tipo]);
+    return notifs;
+}
+
+function formatarData(str) {
+    if (!str) return '—';
+    const [y, m, d] = str.split('-');
+    return `${d}/${m}/${y}`;
+}
+
+function atualizarIconeNotificacao() {
+    const notifs = obterNotificacoes();
+    const btn    = document.getElementById('notif-btn');
+    const badge  = document.getElementById('notif-badge');
+    if (!btn || !badge) return;
+
+    if (notifs.length > 0) {
+        badge.textContent = notifs.length > 99 ? '99+' : notifs.length;
+        badge.classList.remove('hidden');
+        btn.classList.add('has-notif');
+    } else {
+        badge.classList.add('hidden');
+        btn.classList.remove('has-notif');
+    }
+}
+
+function toggleNotifPanel() {
+    const panel = document.getElementById('notif-panel');
+    if (!panel) return;
+    if (panel.classList.contains('hidden')) {
+        renderizarNotifPanel();
+        panel.classList.remove('hidden');
+        // Fecha ao clicar fora
+        setTimeout(() => {
+            document.addEventListener('click', fecharNotifPanelFora, { once: true });
+        }, 50);
+    } else {
+        panel.classList.add('hidden');
+    }
+}
+
+function fecharNotifPanel() {
+    const panel = document.getElementById('notif-panel');
+    if (panel) panel.classList.add('hidden');
+}
+
+function fecharNotifPanelFora(e) {
+    const panel = document.getElementById('notif-panel');
+    const btn   = document.getElementById('notif-btn');
+    if (panel && !panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+        panel.classList.add('hidden');
+    } else if (panel && !panel.classList.contains('hidden')) {
+        setTimeout(() => {
+            document.addEventListener('click', fecharNotifPanelFora, { once: true });
+        }, 50);
+    }
+}
+
+function renderizarNotifPanel() {
+    const lista  = document.getElementById('notif-panel-lista');
+    if (!lista) return;
+    const notifs = obterNotificacoes();
+
+    if (notifs.length === 0) {
+        lista.innerHTML = `<div class="notif-empty"><i class="fas fa-check-circle"></i><p>Nenhuma notificação pendente 🎉</p></div>`;
+        return;
+    }
+
+    const icones = {
+        vencido: '<i class="fas fa-exclamation-triangle"></i>',
+        hoje:    '<i class="fas fa-clock"></i>',
+        amanha:  '<i class="fas fa-bell"></i>'
+    };
+    const labels = {
+        vencido: 'Vencida',
+        hoje:    'Vence Hoje',
+        amanha:  'Vence Amanhã'
+    };
+
+    lista.innerHTML = notifs.map(n => `
+        <div class="notif-item notif-item--clicavel" onclick="irParaConta('${n.id}')" title="Clique para ir à conta">
+            <div class="notif-item-icon ${n.tipo}">${icones[n.tipo]}</div>
+            <div class="notif-item-body">
+                <div class="notif-item-titulo">${n.titulo}</div>
+                <div class="notif-item-desc">${n.desc}</div>
+                <div class="notif-item-valor">${brl(n.valor)}</div>
+                <span class="notif-item-tag ${n.tipo}">${labels[n.tipo]}</span>
+            </div>
+            <div class="notif-item-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+    `).join('');
+}
+
+// Navega para a aba A Pagar e destaca a conta específica
+function irParaConta(id) {
+    fecharNotifPanel();
+
+    // Acessa a aba A Pagar via menu
+    const menuItems = document.querySelectorAll('.menu-item');
+    let menuAPagar = null;
+    menuItems.forEach(item => {
+        if (item.getAttribute('onclick') && item.getAttribute('onclick').includes('a-pagar')) {
+            menuAPagar = item;
+        }
+    });
+
+    if (menuAPagar) {
+        mudarAba('A Pagar', 'a-pagar', menuAPagar);
+    }
+
+    // Aguarda render e destaca o item
+    setTimeout(() => {
+        // Remove destaques anteriores
+        document.querySelectorAll('.reg-item--destaque').forEach(el => el.classList.remove('reg-item--destaque'));
+
+        const itemEl = document.querySelector(`[data-id="${id}"]`);
+        if (itemEl) {
+            itemEl.classList.add('reg-item--destaque');
+            itemEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Remove destaque após 3s
+            setTimeout(() => itemEl.classList.remove('reg-item--destaque'), 3500);
+        }
+    }, 250);
+}
+
+// Dispara notificação push nativa do sistema operacional (PWA)
+async function dispararNotificacoesPush() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+        await Notification.requestPermission();
+    }
+    if (Notification.permission !== 'granted') return;
+
+    const notifs = obterNotificacoes();
+    if (notifs.length === 0) return;
+
+    // Agrupa para não spammar
+    const vencidas = notifs.filter(n => n.tipo === 'vencido').length;
+    const hoje_c   = notifs.filter(n => n.tipo === 'hoje').length;
+    const amanha_c = notifs.filter(n => n.tipo === 'amanha').length;
+
+    let msgs = [];
+    if (vencidas > 0) msgs.push(`${vencidas} conta(s) vencida(s)`);
+    if (hoje_c  > 0) msgs.push(`${hoje_c} conta(s) vence(m) hoje`);
+    if (amanha_c > 0) msgs.push(`${amanha_c} conta(s) vence(m) amanhã`);
+
+    if (msgs.length > 0) {
+        new Notification('💰 Sistema Financeiro LHSC', {
+            body: msgs.join(' · '),
+            icon: 'icon-192.png',
+            badge: 'icon-192.png',
+            tag: 'financas-notif',
+            renotify: false
+        });
+    }
+}
+
+// Hook: atualiza badge sempre que os dados mudarem
+const _origSetData = window.setData;
+if (typeof setData === 'function') {
+    const _setDataOrig = setData;
+    window.setData = function(key, value) {
+        _setDataOrig(key, value);
+        setTimeout(atualizarIconeNotificacao, 100);
+    };
+}
+
+// Inicializa notificações ao carregar
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        atualizarIconeNotificacao();
+        dispararNotificacoesPush();
+        // Verifica a cada 5 minutos
+        setInterval(() => {
+            atualizarIconeNotificacao();
+            dispararNotificacoesPush();
+        }, 5 * 60 * 1000);
+    }, 1000);
+});

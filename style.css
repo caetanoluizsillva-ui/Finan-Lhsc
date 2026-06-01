@@ -82,34 +82,19 @@ body {
 #content-area {
     flex-grow: 1;
     padding: 30px;
-    margin-left: 200px;
+    margin-right: 200px;
+    margin-left: 0;
     overflow-y: auto;
-    direction: rtl; /* scrollbar fica à esquerda */
 }
 
-/* Reverte o conteúdo interno para ltr normal */
-#content-area > * {
-    direction: ltr;
-}
-
-/* Scrollbar discreta — lado esquerdo */
+/* Scrollbar completamente oculta */
 #content-area::-webkit-scrollbar {
-    width: 4px;
+    width: 0;
+    display: none;
 }
-#content-area::-webkit-scrollbar-track {
-    background: transparent;
-}
-#content-area::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0.12);
-    border-radius: 4px;
-}
-#content-area::-webkit-scrollbar-thumb:hover {
-    background: rgba(0,0,0,0.25);
-}
-/* Firefox */
 #content-area {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0,0,0,0.12) transparent;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
 header {
@@ -123,7 +108,7 @@ header {
 }
 .header-mes-selector {
     margin-left: auto;
-    margin-right: 0;
+    margin-right: 8px;
 }
 
 /* Título interativo e dinâmico */
@@ -194,9 +179,10 @@ header {
     height: 100vh;
     background: #ffffff;
     position: fixed;
-    left: 0;
+    right: 0;
+    left: auto;
     top: 0;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+    box-shadow: -2px 0 10px rgba(0,0,0,0.05);
     display: flex;
     flex-direction: column;
     justify-content: center; 
@@ -254,10 +240,10 @@ header {
    ========================================= */
 @media (max-width: 768px) {
     #content-area {
+        margin-right: 0;
         margin-left: 0;
         margin-bottom: 70px; 
         padding: 20px;
-        direction: ltr; /* no mobile a scrollbar fica normal */
     }
 
     #sidebar {
@@ -1242,4 +1228,236 @@ header {
     .dash-kpi-row { grid-template-columns: repeat(2, 1fr); }
     .dash-charts-row { grid-template-columns: 1fr; }
     .dash-charts-row--3col { grid-template-columns: 1fr; }
+}
+
+/* =========================================
+   NOTIFICAÇÕES — SINO E PAINEL FLUTUANTE
+   ========================================= */
+.notif-btn-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.notif-btn {
+    background: transparent;
+    border: 1px solid #ddd;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #7f8c8d;
+    font-size: 17px;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.notif-btn:hover {
+    background: #ebf5fb;
+    border-color: #3498db;
+    color: #3498db;
+}
+
+.notif-btn.has-notif {
+    color: #e74c3c;
+    border-color: #e74c3c;
+    animation: bell-shake 1s ease-in-out;
+}
+
+@keyframes bell-shake {
+    0%, 100% { transform: rotate(0deg); }
+    15%       { transform: rotate(15deg); }
+    30%       { transform: rotate(-12deg); }
+    45%       { transform: rotate(10deg); }
+    60%       { transform: rotate(-8deg); }
+    75%       { transform: rotate(5deg); }
+}
+
+.notif-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #e74c3c;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    pointer-events: none;
+    border: 2px solid #fff;
+}
+
+/* Painel flutuante */
+.notif-panel {
+    position: fixed;
+    top: 75px;
+    right: 215px;
+    width: 340px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    z-index: 9999;
+    overflow: hidden;
+    animation: fadeInDown 0.2s ease;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.notif-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #2c3e50, #3498db);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.notif-panel-header i {
+    margin-right: 8px;
+}
+
+.notif-panel-close {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.8);
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+.notif-panel-close:hover { color: #fff; }
+
+.notif-panel-lista {
+    max-height: 380px;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+.notif-panel-lista::-webkit-scrollbar { display: none; }
+
+.notif-empty {
+    padding: 30px 20px;
+    text-align: center;
+    color: #bdc3c7;
+}
+.notif-empty i { font-size: 32px; color: #2ecc71; margin-bottom: 10px; display: block; }
+.notif-empty p { font-size: 13px; }
+
+.notif-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 18px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: #f8f9fa; }
+
+.notif-item-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+    color: #fff;
+}
+
+.notif-item-icon.vencido  { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+.notif-item-icon.amanha   { background: linear-gradient(135deg, #f39c12, #e67e22); }
+.notif-item-icon.hoje     { background: linear-gradient(135deg, #e67e22, #d35400); }
+
+.notif-item-body { flex: 1; }
+.notif-item-titulo {
+    font-weight: 600;
+    font-size: 13px;
+    color: #2c3e50;
+    margin-bottom: 2px;
+}
+.notif-item-desc {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-bottom: 4px;
+}
+.notif-item-valor {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e74c3c;
+}
+.notif-item-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 3px;
+}
+.notif-item-tag.vencido { background: #fdecea; color: #e74c3c; }
+.notif-item-tag.amanha  { background: #fef5e7; color: #f39c12; }
+.notif-item-tag.hoje    { background: #fef5e7; color: #e67e22; }
+
+/* Mobile: notif panel position adjust */
+@media (max-width: 768px) {
+    .notif-panel {
+        right: 10px;
+        left: 10px;
+        width: auto;
+        top: 60px;
+    }
+}
+
+/* =========================================
+   DESTAQUE DE ITEM — navegação da notificação
+   ========================================= */
+@keyframes highlight-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.5), inset 0 0 0 2px rgba(231,76,60,0.3); background: rgba(231,76,60,0.08); }
+    50%  { box-shadow: 0 0 0 8px rgba(231, 76, 60, 0), inset 0 0 0 2px rgba(231,76,60,0.6); background: rgba(231,76,60,0.12); }
+    100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); background: transparent; }
+}
+
+.reg-item--destaque {
+    animation: highlight-pulse 0.8s ease-out 3;
+    border-radius: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Notif item clicável */
+.notif-item--clicavel {
+    cursor: pointer;
+}
+
+.notif-item--clicavel:hover {
+    background: #f0f7ff !important;
+}
+
+.notif-item-arrow {
+    display: flex;
+    align-items: center;
+    color: #bdc3c7;
+    font-size: 12px;
+    flex-shrink: 0;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.notif-item--clicavel:hover .notif-item-arrow {
+    color: #3498db;
+    transform: translateX(3px);
 }
