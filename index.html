@@ -118,6 +118,9 @@
                 <span id="header-mes-label" onclick="abrirMesPicker()" title="Selecionar mês" style="cursor:pointer">Todos</span>
                 <button class="mes-nav-btn" onclick="navegarMes(1)"><i class="fas fa-chevron-right"></i></button>
             </div>
+            <button class="notif-btn" onclick="toggleOcultarValores()" title="Ocultar Valores">
+                <i id="icon-ocultar" class="fas fa-eye"></i>
+            </button>
             <div class="notif-btn-wrapper">
                 <button class="notif-btn" id="notif-btn" onclick="toggleNotifPanel()" title="Notificações">
                     <i class="fas fa-bell"></i>
@@ -807,5 +810,6 @@
 <!-- Configuração do Firebase: edite este arquivo para inserir suas chaves -->
 <script src="firebase-config.js"></script>
 <script src="app.js"></script>
+<script src="render.js"></script>
 </body>
 </html>

@@ -1593,3 +1593,51 @@ header {
     color: #3498db;
     transform: translateX(3px);
 }
+/* ==========================================
+   MODO PRIVACIDADE (Ocultar Valores)
+   ========================================== */
+
+.valor-dinheiro {
+    transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+/* KPIs do dashboard */
+body.modo-oculto #kpi-cartoes,
+body.modo-oculto #kpi-pagas,
+body.modo-oculto #kpi-previsao,
+body.modo-oculto #kpi-total-despesas,
+/* Totais das abas */
+body.modo-oculto #despesas-total,
+body.modo-oculto #apagar-total,
+body.modo-oculto #receita-total,
+body.modo-oculto #metas-total-valor,
+/* Valores nas listas dinâmicas */
+body.modo-oculto .reg-valor,
+body.modo-oculto .dash-kpi-value,
+body.modo-oculto .dash-cartao-valor,
+body.modo-oculto .valor-dinheiro,
+body.modo-oculto .contas-val {
+    filter: blur(7px);
+    opacity: 0.6;
+    user-select: none;
+    transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+/* Modal a-pagar — altura controlada com scroll */
+#modal-a-pagar .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* =========================================
+   BOTÃO OCULTAR VALORES — alinhado ao notif-btn
+   ========================================= */
+header > .notif-btn {
+    /* herda os estilos de .notif-btn mas sem o wrapper */
+    flex-shrink: 0;
+}
+
+/* Remove o bloco top-bar-icons caso ainda exista no DOM */
+.top-bar-icons {
+    display: none !important;
+}

@@ -110,7 +110,8 @@ function brl(n) { return 'R$ '+(+n||0).toLocaleString('pt-BR',{minimumFractionDi
 const MESES_ABREV = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const MESES_FULL  = ['Janeiro','Fevereiro','MarÃ§o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-let _mesSel = null; 
+// O mês atual em JavaScript vai de 0 (Janeiro) a 11 (Dezembro)
+let _mesSel = new Date().getMonth(); 
 let _anoSel = new Date().getFullYear();
 
 function getMesSel()  { return _mesSel; }
@@ -140,6 +141,55 @@ function navegarMes(dir) {
     if (typeof renderizarReceitas === 'function') renderizarReceitas(); 
     if (typeof renderizarAnalise === 'function') renderizarAnalise();
 }
+// ==========================================
+// MODO PRIVACIDADE
+// ==========================================
+function toggleOcultarValores() {
+    const body = document.body;
+    const icon = document.getElementById('icon-ocultar');
+    
+    // Liga ou desliga a classe 'modo-oculto' no body
+    body.classList.toggle('modo-oculto');
+    
+    if (body.classList.contains('modo-oculto')) {
+        // Mudamos o ícone para o olho cortado e guardamos a preferência
+        if(icon) icon.className = 'fas fa-eye-slash';
+        localStorage.setItem('valoresOcultos', 'true');
+        toast('Modo privacidade ativado', 'success');
+    } else {
+        // Voltamos ao olho normal
+        if(icon) icon.className = 'fas fa-eye';
+        localStorage.setItem('valoresOcultos', 'false');
+        toast('Valores visíveis', 'success');
+    }
+}
+
+// Verifica se o utilizador já tinha deixado o modo oculto ativado na última visita// ==========================================
+// GATILHO DE ARRANQUE DO SISTEMA
+// ==========================================
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. Lembrar a preferência do Modo Privacidade
+    if (localStorage.getItem('valoresOcultos') === 'true') {
+        document.body.classList.add('modo-oculto');
+        const icon = document.getElementById('icon-ocultar');
+        if (icon) icon.className = 'fas fa-eye-slash';
+    }
+
+    // 2. Forçar a barra de topo a mostrar o Mês e Ano atuais
+    _mesSel = new Date().getMonth();
+    _anoSel = new Date().getFullYear();
+    
+    // Chama as funções que atualizam os textos na tela
+    if (typeof _atualizarHeaderMes === 'function') _atualizarHeaderMes();
+    if (typeof _sincronizarAnoConfig === 'function') _sincronizarAnoConfig();
+    
+    // Se a aplicação já estiver pronta, força a renderização para mostrar os dados de hoje
+    setTimeout(() => {
+        if (typeof renderizarAnalise === 'function' && !document.getElementById('content-analise').classList.contains('hidden')) {
+            renderizarAnalise();
+        }
+    }, 100);
+});
 
 function abrirMesPicker() {
     const grid = document.getElementById('mes-picker-grid');
@@ -324,4 +374,14 @@ function salvarDespesa() {
     // Atualizar ecrÃ£s se as funÃ§Ãµes existirem noutros ficheiros
     if (typeof renderizarDespesas === 'function') renderizarDespesas();
     if (typeof renderizarAnalise === 'function') renderizarAnalise();
+}
+function toggleNotifPanel() {
+    const panel = document.getElementById('notif-panel');
+    if (!panel) return;
+    panel.classList.toggle('hidden');
+}
+
+function fecharNotifPanel() {
+    const panel = document.getElementById('notif-panel');
+    if (panel) panel.classList.add('hidden');
 }
