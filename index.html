@@ -21,49 +21,91 @@
 <body>
 
 <!-- ========== TELA DE LOGIN ========== -->
+
 <div id="login-screen">
   <div class="login-card">
+
+    <!-- CABEÇALHO -->
     <div class="login-card__header">
       <div class="login-logo">
-        <i class="fas fa-wallet"></i>
+        <i class="fas fa-file-invoice-dollar"></i>
       </div>
-      <h1 class="login-title">Finanças LHSC</h1>
+      <h1 class="login-title">Sistema Financeiro</h1>
       <p class="login-subtitle">Acesse sua conta para continuar</p>
     </div>
 
+    <!-- CORPO DO FORMULÁRIO -->
     <div class="login-card__body">
+
       <div class="form-group">
-        <label for="username"><i class="fas fa-envelope"></i> E-mail</label>
-        <input type="email" id="username" placeholder="seu@email.com" autocomplete="email" />
+        <label for="username">
+          <i class="fas fa-envelope"></i> E-mail
+        </label>
+        <input
+          type="email"
+          id="username"
+          placeholder="seu@email.com"
+          autocomplete="email"
+          inputmode="email"
+        />
       </div>
 
       <div class="form-group">
-        <label for="password"><i class="fas fa-lock"></i> Senha</label>
+        <label for="password">
+          <i class="fas fa-lock"></i> Senha
+        </label>
         <div class="input-password-wrapper">
-          <input type="password" id="password" placeholder="Sua senha" autocomplete="current-password" />
-          <button type="button" class="btn-toggle-password" onclick="toggleSenhaVisivel()" title="Mostrar/ocultar senha">
-            <i class="fas fa-eye" id="icone-senha"></i>
+          <input
+            type="password"
+            id="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+          />
+          <button
+            type="button"
+            class="btn-toggle-password"
+            onclick="toggleSenhaVisivel()"
+            tabindex="-1"
+            aria-label="Mostrar/ocultar senha"
+          >
+            <i class="fas fa-eye" id="olho-icon"></i>
           </button>
         </div>
       </div>
 
-      <div id="login-error" class="login-error" role="alert"></div>
+      <!-- Link de recuperação de senha -->
+      <div style="text-align:right; margin-top:-8px;">
+        <a href="#" id="link-recuperar-senha"
+          style="font-size:12px; color:#2980b9; text-decoration:none;"
+          onclick="recuperarSenha(event)">
+          Esqueci minha senha
+        </a>
+      </div>
 
+      <!-- Mensagem de erro/feedback -->
+      <p class="login-error" id="login-error"></p>
+
+      <!-- Botão de login -->
       <button class="btn-login" id="btn-login" onclick="fazerLogin()">
-        <i class="fas fa-sign-in-alt"></i> Entrar no Sistema
+        <i class="fas fa-sign-in-alt"></i>
+        <span id="btn-login-texto">Entrar no Sistema</span>
       </button>
 
-      <div id="firebase-init-status" class="login-firebase-status">
-        <i class="fas fa-circle-notch fa-spin"></i> Conectando ao Firebase...
+      <!-- Status Firebase -->
+      <div class="login-firebase-status" id="login-firebase-status">
+        <i class="fas fa-circle" style="font-size:8px; color:#bbb;" id="firebase-status-dot"></i>
+        <span id="firebase-status-txt">Conectando...</span>
       </div>
+
     </div>
 
+    <!-- RODAPÉ -->
     <div class="login-card__footer">
       <p>Sistema Financeiro &copy; 2025 LHSC</p>
     </div>
+
   </div>
 </div>
-
 <div id="app-screen" class="screen hidden">
     <main id="content-area">
         <header>
