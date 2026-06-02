@@ -45,7 +45,22 @@ async function fazerLogin() {
 }
 document.getElementById('password').addEventListener('keypress', e => { if (e.key==='Enter') fazerLogin(); });
 
-async function fazerLogout() {
+async function fazerLogout()
+// ==========================================
+// LOGIN — TOGGLE VISIBILIDADE DE SENHA
+// ==========================================
+function toggleSenhaVisivel() {
+  const input = document.getElementById('password');
+  const icone = document.getElementById('icone-senha');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icone.classList.replace('fa-eye', 'fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icone.classList.replace('fa-eye-slash', 'fa-eye');
+  }
+}
+ {
     if (window._firebaseAPI && window._firebaseAuth) {
         const { signOut } = window._firebaseAPI;
         await signOut(window._firebaseAuth); // Desloga do Firebase

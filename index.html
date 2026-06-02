@@ -20,22 +20,48 @@
 </head>
 <body>
 
+<!-- ========== TELA DE LOGIN ========== -->
 <div id="login-screen">
-    <div class="login-box">
-        <h2><i class="fas fa-wallet"></i> Finanças LHSC</h2>
-        <p>Acesse o seu painel de controle</p>
-        
-        <input type="email" id="username" placeholder="Seu E-mail (ex: seu@email.com)">
-        
-        <input type="password" id="password" placeholder="Sua Senha">
-        
-        <button class="btn-primary" id="btn-login" onclick="fazerLogin()">Entrar no Sistema</button>
-        
-        <div id="login-error" class="login-error" style="color: #c0392b; margin-top: 10px; font-size: 14px;"></div>
-        <div id="firebase-init-status" style="margin-top: 10px; font-size: 12px; color: #7f8c8d;">
-            <i class="fas fa-circle-notch fa-spin"></i> Conectando ao Firebase...
-        </div>
+  <div class="login-card">
+    <div class="login-card__header">
+      <div class="login-logo">
+        <i class="fas fa-wallet"></i>
+      </div>
+      <h1 class="login-title">Finanças LHSC</h1>
+      <p class="login-subtitle">Acesse sua conta para continuar</p>
     </div>
+
+    <div class="login-card__body">
+      <div class="form-group">
+        <label for="username"><i class="fas fa-envelope"></i> E-mail</label>
+        <input type="email" id="username" placeholder="seu@email.com" autocomplete="email" />
+      </div>
+
+      <div class="form-group">
+        <label for="password"><i class="fas fa-lock"></i> Senha</label>
+        <div class="input-password-wrapper">
+          <input type="password" id="password" placeholder="Sua senha" autocomplete="current-password" />
+          <button type="button" class="btn-toggle-password" onclick="toggleSenhaVisivel()" title="Mostrar/ocultar senha">
+            <i class="fas fa-eye" id="icone-senha"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="login-error" class="login-error" role="alert"></div>
+
+      <button class="btn-login" id="btn-login" onclick="fazerLogin()">
+        <i class="fas fa-sign-in-alt"></i> Entrar no Sistema
+      </button>
+
+      <div id="firebase-init-status" class="login-firebase-status">
+        <i class="fas fa-circle-notch fa-spin"></i> Conectando ao Firebase...
+      </div>
+    </div>
+
+    <div class="login-card__footer">
+      <p>Sistema Financeiro &copy; 2025 LHSC</p>
+    </div>
+  </div>
 </div>
 
 <div id="app-screen" class="screen hidden">
