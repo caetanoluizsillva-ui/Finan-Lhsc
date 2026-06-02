@@ -1,4 +1,21 @@
 // ==========================================
+// TELA DE LOGIN: Mostrar/Ocultar Senha
+// ==========================================
+function toggleSenhaVisivel() {
+    const inputSenha = document.getElementById('password');
+    // Se você tiver um ícone de olho no HTML, coloque o ID dele aqui (ex: 'olho-icon')
+    const iconOlho = document.getElementById('olho-icon'); 
+
+    if (inputSenha.type === 'password') {
+        inputSenha.type = 'text';
+        if (iconOlho) iconOlho.className = 'fas fa-eye-slash';
+    } else {
+        inputSenha.type = 'password';
+        if (iconOlho) iconOlho.className = 'fas fa-eye';
+    }
+}
+
+// ==========================================
 // LOGIN / LOGOUT / NAVEGAÇÃO
 // ==========================================
 async function fazerLogin() {
@@ -13,7 +30,7 @@ async function fazerLogin() {
     }
 
     if (!window._firebaseAPI || !window._firebaseAuth) {
-        err.innerText = 'Firebase ainda inicializando. Aguarde alguns segundos e tente novamente.';
+        err.innerText = 'Firebase ainda inicializando. Aguarde alguns segundos...';
         return;
     }
 
@@ -26,26 +43,40 @@ async function fazerLogin() {
         await signInWithEmailAndPassword(window._firebaseAuth, email, pass);
         
         err.innerText = '';
-        // A transição de tela é feita automaticamente pelo onAuthStateChanged abaixo
+        if (btnLogin) { btnLogin.disabled = false; btnLogin.textContent = 'Entrar no Sistema'; }
+        // A transição de tela será feita automaticamente pelo observador do Firebase!
+        
     } catch (error) {
         console.error("Erro no login:", error);
         err.style.color = '#c0392b';
-        // Mensagens amigáveis por código de erro Firebase
-        const msgs = {
-            'auth/user-not-found':    'E-mail não cadastrado.',
-            'auth/wrong-password':    'Senha incorreta.',
-            'auth/invalid-email':     'E-mail inválido.',
-            'auth/too-many-requests': 'Muitas tentativas. Aguarde e tente novamente.',
-            'auth/invalid-credential':'E-mail ou senha incorretos.',
-            'auth/network-request-failed': 'Sem conexão com a internet.',
-        };
-        err.innerText = msgs[error.code] || 'Erro ao autenticar. Verifique seus dados.';
         if (btnLogin) { btnLogin.disabled = false; btnLogin.textContent = 'Entrar no Sistema'; }
+        
+        // Objeto de mensagens fechado corretamente com chaves e ponto-e-vírgula!
+        const msgs = {
+            'auth/user-not-found': 'E-mail não cadastrado.',
+            'auth/wrong-password': 'Senha incorreta.',
+            'auth/invalid-email': 'Formato de e-mail inválido.',
+            'auth/invalid-credential': 'As credenciais estão incorretas.'
+        };
+        
+        err.innerText = msgs[error.code] || 'Erro ao fazer login. Verifique seus dados.';
     }
 }
-document.getElementById('password').addEventListener('keypress', e => { if (e.key==='Enter') fazerLogin(); });
 
-async function fazerLogout()
+document.getElementById('password').addEventListener('keypress', e => { 
+    if (e.key === 'Enter') fazerLogin(); 
+});
+
+async function fazerLogout() {
+    if (window._firebaseAPI && window._firebaseAuth) {
+        const { signOut } = window._firebaseAPI;
+        await signOut(window._firebaseAuth); // Desloga do Firebase
+    }
+    
+    document.getElementById('app-screen').classList.add('hidden');
+    document.getElementById('login-screen').classList.remove('hidden');
+    ['username','password'].forEach(id => document.getElementById(id).value = '');
+}
 // ==========================================
 // LOGIN — TOGGLE VISIBILIDADE DE SENHA
 // ==========================================
