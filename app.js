@@ -1519,7 +1519,11 @@ async function _syncCollection(key, dados) {
     if (!_db || !_userId) return;
     try {
         const { doc, setDoc } = window._firestoreApi;
-        await setDoc(doc(_db, 'usuarios', _userId, 'dados', key), { payload: JSON.stringify(dados), updatedAt: Date.now() });
+        
+        // CORREÇÃO APLICADA: ID Fixo para todos os dispositivos
+        const idPartilhado = "conta_partilhada_lhsc";
+        
+        await setDoc(doc(_db, 'usuarios', idPartilhado, 'dados', key), { payload: JSON.stringify(dados), updatedAt: Date.now() });
         // Remove da fila de pendentes se estava lá
         const q = _getPendingQueue().filter(x => x.colecao !== key);
         _setPendingQueue(q);
@@ -1535,7 +1539,11 @@ async function _baixarDadosFirebase() {
     if (!_db || !_userId) return;
     try {
         const { collection, getDocs } = window._firestoreApi;
-        const snap = await getDocs(collection(_db, 'usuarios', _userId, 'dados'));
+        
+        // CORREÇÃO APLICADA: ID Fixo para ler dados compartilhados
+        const idPartilhado = "conta_partilhada_lhsc";
+        
+        const snap = await getDocs(collection(_db, 'usuarios', idPartilhado, 'dados'));
         let baixou = false;
         snap.forEach(docSnap => {
             const key = docSnap.id;
@@ -1681,10 +1689,10 @@ async function initFirebaseSync() {
         _userId = cred.user.uid;
         localStorage.setItem('_firebase_uid', _userId);
 
-        console.info('Firebase conectado. UID:', _userId);
+        console.info('Firebase conectado. UID local:', _userId);
         _mostrarStatus('Firebase conectado ✓', 'success', 3000);
 
-        // Baixa dados do servidor e processa fila pendente
+        // Baixa dados do servidor e processa fila pendente usando o ID PARTILHADO
         await _baixarDadosFirebase();
         await _processarFilaPendente();
         _atualizarIndicadorSync();
@@ -1737,7 +1745,7 @@ function renderizarConfiguracoes() {
                     <span class="config-item-label">Status Firebase</span>
                     <span class="config-item-desc" id="firebase-status-desc">
                         ${window.FIREBASE_ENABLED
-                            ? (_userId ? `✅ Conectado (UID: ${(_userId||'').slice(0,8)}...)` : '⏳ Conectando...')
+                            ? (_userId ? `✅ Conectado (ID Partilhado: conta_partilhada_lhsc)` : '⏳ Conectando...')
                             : '⚙️ Desabilitado – edite firebase-config.js para ativar'}
                     </span>
                 </div>

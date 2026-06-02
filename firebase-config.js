@@ -27,5 +27,5 @@ const firebaseConfig = {
 const FIREBASE_ENABLED = true; // <- mude para true após configurar as chaves acima
 
 // Exporta para uso no app.js
-window.FIREBASE_CONFIG   = firebaseConfig; // CORREÇÃO APLICADA AQUI
+window.FIREBASE_CONFIG   = FIREBASE_CONFIG;
 window.FIREBASE_ENABLED  = FIREBASE_ENABLED;

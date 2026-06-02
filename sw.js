@@ -1,113 +1,58 @@
 // ==========================================
-// SERVICE WORKER - Offline First
-// v3 - Sis_Finan_v9
+// SERVICE WORKER - GESTÃO DE CACHE E OFFLINE
 // ==========================================
-const CACHE_NAME = 'financas-v10';
+
+// Atualize esta versão (ex: v12, v13) sempre que alterar o código do app.js, index.html ou style.css.
+// Isso força os smartphones a baixarem a versão mais recente do GitHub.
+const CACHE_NAME = 'financas-v11';
+
+// Lista de arquivos fundamentais para o sistema funcionar offline
 const STATIC_ASSETS = [
     './',
     './index.html',
     './style.css',
     './app.js',
-    './firebase-config.js',
     './manifest.json',
     './icon-192.png',
     './icon-512.png',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-    'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'
+    './firebase-config.js'
 ];
 
-// Instala e faz cache dos assets estáticos
-self.addEventListener('install', event => {
-    self.skipWaiting();
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            return cache.addAll(STATIC_ASSETS).catch(err => {
-                console.warn('SW: Alguns assets não foram cacheados:', err);
-            });
+// Instalação: Ocorre na primeira vez que o usuário acessa ou quando a versão do CACHE_NAME muda
+self.addEventListener('install', (e) => {
+    e.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            console.log('[Service Worker] Fazendo cache dos arquivos estáticos');
+            return cache.addAll(STATIC_ASSETS);
         })
     );
+    self.skipWaiting(); // Força a ativação imediata do novo Service Worker
 });
 
-// Ativa e limpa caches antigos
-self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(
-                keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-            )
-        ).then(() => self.clients.claim())
-    );
-});
-
-// Estratégia: Cache First para assets locais, Network First para Firebase
-self.addEventListener('fetch', event => {
-    const url = new URL(event.request.url);
-
-    // Firebase e APIs externas: Network First (não cacheia)
-    if (url.hostname.includes('firebase') ||
-        url.hostname.includes('firestore') ||
-        url.hostname.includes('googleapis')) {
-        event.respondWith(
-            fetch(event.request).catch(() => {
-                // Retorna 503 silencioso para o Firebase quando offline
-                return new Response(JSON.stringify({ error: 'offline' }), {
-                    status: 503,
-                    headers: { 'Content-Type': 'application/json' }
-                });
-            })
-        );
-        return;
-    }
-
-    // Assets locais: Cache First, fallback para network
-    event.respondWith(
-        caches.match(event.request).then(cached => {
-            if (cached) return cached;
-            return fetch(event.request).then(response => {
-                if (response && response.status === 200 && response.type === 'basic') {
-                    const cloned = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, cloned));
-                }
-                return response;
-            }).catch(() => caches.match('./index.html'));
+// Ativação: Limpa os caches antigos (versões anteriores)
+self.addEventListener('activate', (e) => {
+    e.waitUntil(
+        caches.keys().then((keys) => {
+            return Promise.all(
+                keys.filter((key) => key !== CACHE_NAME).map((key) => {
+                    console.log('[Service Worker] Removendo cache antigo:', key);
+                    return caches.delete(key);
+                })
+            );
         })
     );
+    self.clients.claim(); // Assume o controle de todas as abas abertas imediatamente
 });
 
-// Mensagens do app para o SW
-self.addEventListener('message', event => {
-    if (event.data === 'skipWaiting') {
-        self.skipWaiting();
-    }
-});
-
-// Responde a notificações push (background)
-self.addEventListener('push', event => {
-    const data = event.data ? event.data.json() : {};
-    const title = data.title || '💰 Sistema Financeiro LHSC';
-    const options = {
-        body: data.body || 'Você tem contas pendentes!',
-        icon: './icon-192.png',
-        badge: './icon-192.png',
-        tag: 'financas-notif',
-        renotify: false,
-        data: { url: data.url || './' }
-    };
-    event.waitUntil(self.registration.showNotification(title, options));
-});
-
-// Ao clicar na notificação, abre o app
-self.addEventListener('notificationclick', event => {
-    event.notification.close();
-    const url = (event.notification.data && event.notification.data.url) || './';
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-            for (const c of list) {
-                if (c.url.includes('index.html') || c.url.endsWith('/')) {
-                    return c.focus();
-                }
-            }
-            return clients.openWindow(url);
+// Fetch: Intercepta os pedidos de rede
+self.addEventListener('fetch', (e) => {
+    // Estratégia "Cache First, falling back to Network"
+    e.respondWith(
+        caches.match(e.request).then((res) => {
+            // Se encontrou no cache, retorna o arquivo em cache
+            if (res) return res;
+            // Se não encontrou, busca na internet
+            return fetch(e.request);
         })
     );
 });
