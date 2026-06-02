@@ -7,7 +7,7 @@
 // 3. Vá em "Configurações do projeto" > "Seus apps" > "Web"
 // 4. Copie as chaves e cole abaixo
 // 5. No Firebase Console, ative:
-//    - Authentication > Sign-in method > Anônimo (para uso sem login Firebase)
+//    - Authentication > Sign-in method > E-mail/Senha
 //    - Firestore Database > Criar banco de dados (modo produção ou teste)
 // ==========================================
 
@@ -24,8 +24,8 @@ const firebaseConfig = {
 // CONTROLE DE SINCRONIZAÇÃO
 // Altere para false para usar apenas localStorage (modo offline total)
 // ==========================================
-const FIREBASE_ENABLED = true; // <- mude para true após configurar as chaves acima
+const FIREBASE_ENABLED = true;
 
-// Exporta para uso no app.js
-window.FIREBASE_CONFIG   = FIREBASE_CONFIG;
-window.FIREBASE_ENABLED  = FIREBASE_ENABLED;
+// FIX: Exporta com o nome correto que o app.js espera (window.FIREBASE_CONFIG)
+window.FIREBASE_CONFIG  = firebaseConfig;   // era: window.FIREBASE_CONFIG = FIREBASE_CONFIG (variável inexistente)
+window.FIREBASE_ENABLED = FIREBASE_ENABLED;
