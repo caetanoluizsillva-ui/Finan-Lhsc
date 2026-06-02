@@ -15,7 +15,7 @@ function toggleSenhaVisivel() {
 }
 
 // ==========================================
-// LOGIN / LOGOUT / NAVEGAÇÃO
+// LOGIN / LOGOUT / NAVEGAÃ‡ÃƒO
 // ==========================================
 async function fazerLogin() {
     const email = document.getElementById('username').value.trim(); 
@@ -47,10 +47,10 @@ async function fazerLogin() {
         if(err) {
             err.style.color = '#c0392b';
             const msgs = {
-                'auth/user-not-found': 'E-mail não cadastrado.',
+                'auth/user-not-found': 'E-mail nÃ£o cadastrado.',
                 'auth/wrong-password': 'Senha incorreta.',
-                'auth/invalid-email': 'Formato de e-mail inválido.',
-                'auth/invalid-credential': 'As credenciais estão incorretas.'
+                'auth/invalid-email': 'Formato de e-mail invÃ¡lido.',
+                'auth/invalid-credential': 'As credenciais estÃ£o incorretas.'
             };
             err.innerText = msgs[error.code] || 'Erro ao fazer login. Verifique seus dados.';
         }
@@ -93,12 +93,12 @@ function mudarAba(nome, id, el) {
 }
 
 function voltarParaAnalise() {
-    mudarAba('Análise','analise', document.querySelector('.menu-item'));
+    mudarAba('AnÃ¡lise','analise', document.querySelector('.menu-item'));
     if (typeof renderizarAnalise === 'function') renderizarAnalise();
 }
 
 // ==========================================
-// STORAGE E VARIÁVEIS GLOBAIS
+// STORAGE E VARIÃVEIS GLOBAIS
 // ==========================================
 function getData(key, def=[]) {
     try { const v=localStorage.getItem(key); return v?JSON.parse(v):def; } catch { return def; }
@@ -108,7 +108,7 @@ function uid() { return Date.now().toString(36)+Math.random().toString(36).slice
 function brl(n) { return 'R$ '+(+n||0).toLocaleString('pt-BR',{minimumFractionDigits:2}); }
 
 const MESES_ABREV = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-const MESES_FULL  = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MESES_FULL  = ['Janeiro','Fevereiro','MarÃ§o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
 let _mesSel = null; 
 let _anoSel = new Date().getFullYear();
@@ -229,7 +229,7 @@ function _populateDespesaSelects() {
     
     const tpEl = document.getElementById('despesa-tipo-pagamento');
     if(tpEl) {
-        const optsCartoes = cartoes.map(c=>`<option value="cartao_${c.id}">💳 ${c.nome}</option>`).join('');
+        const optsCartoes = cartoes.map(c=>`<option value="cartao_${c.id}">ðŸ’³ ${c.nome}</option>`).join('');
         const optsTipos   = tipos.map(t=>`<option value="tipo_${t.id}">${t.icone} ${t.nome}</option>`).join('');
         tpEl.innerHTML = '<option value="">Selecione...</option>' + optsCartoes + optsTipos;
     }
@@ -274,7 +274,7 @@ function salvarDespesa() {
     const valor = parseFloat(document.getElementById('despesa-valor').value);
     const data  = document.getElementById('despesa-data').value;
     
-    if (!desc)  { toast('Informe a descrição.','error'); return; }
+    if (!desc)  { toast('Informe a descriÃ§Ã£o.','error'); return; }
     if (!valor) { toast('Informe o valor.','error'); return; }
     if (!data)  { toast('Informe a data.','error'); return; }
 
@@ -283,7 +283,7 @@ function salvarDespesa() {
     const tpVal  = document.getElementById('despesa-tipo-pagamento').value;
     let tipoPagamentoNome = '';
     
-    // AQUI ESTAVA O TEU ERRO ANTIGO (AGORA ESTÁ CORRIGIDO)
+    // AQUI ESTAVA O TEU ERRO ANTIGO (AGORA ESTÃ CORRIGIDO)
     if (tpVal && tpVal.startsWith('cartao_')) {
         const idCartao = tpVal.replace('cartao_', '');
         const c = getData('cartoes').find(x => x.id === idCartao);
@@ -307,7 +307,7 @@ function salvarDespesa() {
         obs: document.getElementById('despesa-obs').value
     };
 
-    // Salvar na memória (localStorage)
+    // Salvar na memÃ³ria (localStorage)
     const despesas = getData('despesas_gastos', []);
     const editId = document.getElementById('despesa-edit-id').value;
     if (editId) {
@@ -321,7 +321,7 @@ function salvarDespesa() {
     toast('Despesa salva com sucesso!', 'success');
     fecharModal('modal-despesa');
     
-    // Atualizar ecrãs se as funções existirem noutros ficheiros
+    // Atualizar ecrÃ£s se as funÃ§Ãµes existirem noutros ficheiros
     if (typeof renderizarDespesas === 'function') renderizarDespesas();
     if (typeof renderizarAnalise === 'function') renderizarAnalise();
 }
