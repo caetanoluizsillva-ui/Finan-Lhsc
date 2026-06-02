@@ -1,29 +1,44 @@
 // ==========================================
 // LOGIN / LOGOUT / NAVEGAÇÃO
 // ==========================================
-function fazerLogin() {
-    const user = document.getElementById('username').value;
-    const pass = document.getElementById('password').value;
-    const err  = document.getElementById('login-error');
-    if (user === 'lhsc' && pass === '123') {
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('app-screen').classList.remove('hidden');
+async function fazerLogin() {
+    const email = document.getElementById('username').value.trim(); // Agora recebe o E-mail
+    const pass  = document.getElementById('password').value;
+    const err   = document.getElementById('login-error');
+
+    if (!email || !pass) {
+        err.innerText = 'Preencha o e-mail e a senha.';
+        return;
+    }
+
+    if (!window._firebaseAPI || !window._firebaseAuth) {
+        err.innerText = 'Conectando ao servidor... tente novamente em 2 segundos.';
+        return;
+    }
+
+    try {
+        err.innerText = 'Autenticando...';
+        const { signInWithEmailAndPassword } = window._firebaseAPI;
+        
+        // Faz a chamada real ao servidor do Google
+        await signInWithEmailAndPassword(window._firebaseAuth, email, pass);
+        
         err.innerText = '';
-        // Garante que o mês/ano estão no estado correto (mês atual) ao entrar
-        const hoje = new Date();
-        _mesSel = hoje.getMonth();
-        _anoSel = hoje.getFullYear();
-        _atualizarHeaderMes();
-        _atualizarDataHoje();
-        // Renderiza o dashboard inicial
-        renderizarAnalise();
-    } else {
-        err.innerText = 'Usuário ou senha incorretos.';
+        // A transição de tela será feita automaticamente pelo observador do Firebase abaixo
+    } catch (error) {
+        console.error("Erro no login:", error);
+        err.innerText = 'E-mail ou senha incorretos.';
     }
 }
+
 document.getElementById('password').addEventListener('keypress', e => { if (e.key==='Enter') fazerLogin(); });
 
-function fazerLogout() {
+async function fazerLogout() {
+    if (window._firebaseAPI && window._firebaseAuth) {
+        const { signOut } = window._firebaseAPI;
+        await signOut(window._firebaseAuth); // Desloga do Firebase
+    }
+    
     document.getElementById('app-screen').classList.add('hidden');
     document.getElementById('login-screen').classList.remove('hidden');
     ['username','password'].forEach(id => document.getElementById(id).value = '');
@@ -1534,23 +1549,38 @@ async function _syncCollection(key, dados) {
     }
 }
 
+// ---- Firebase: enviar uma coleção ----
+async function _syncCollection(key, dados) {
+    if (!_db || !_userId) return;
+    try {
+        const { doc, setDoc } = window._firestoreApi;
+        
+        // Usamos o _userId gerado pelo seu login real
+        await setDoc(doc(_db, 'usuarios', _userId, 'dados', key), { payload: JSON.stringify(dados), updatedAt: Date.now() });
+        
+        const q = _getPendingQueue().filter(x => x.colecao !== key);
+        _setPendingQueue(q);
+        _atualizarIndicadorSync();
+    } catch (e) {
+        console.warn('Sync falhou para', key, e.message);
+        _addToPendingQueue(key, dados);
+    }
+}
+
 // ---- Firebase: baixar todos os dados do servidor ----
 async function _baixarDadosFirebase() {
     if (!_db || !_userId) return;
     try {
         const { collection, getDocs } = window._firestoreApi;
         
-        // CORREÇÃO APLICADA: ID Fixo para ler dados compartilhados
-        const idPartilhado = "conta_partilhada_lhsc";
-        
-        const snap = await getDocs(collection(_db, 'usuarios', idPartilhado, 'dados'));
+        // Lemos os dados associados à sua conta logada
+        const snap = await getDocs(collection(_db, 'usuarios', _userId, 'dados'));
         let baixou = false;
         snap.forEach(docSnap => {
             const key = docSnap.id;
             const data = docSnap.data();
             if (data.payload) {
                 const dadosServidor = JSON.parse(data.payload);
-                // Merge: servidor ganha se tiver mais itens (estratégia simples)
                 const local = (() => { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } })();
                 if (Array.isArray(dadosServidor) && dadosServidor.length >= local.length) {
                     localStorage.setItem(key, data.payload);
@@ -1559,12 +1589,8 @@ async function _baixarDadosFirebase() {
             }
         });
         if (baixou) {
-            // Re-renderiza tudo com dados novos
-            renderizarDespesas();
-            renderizarAPagar();
-            renderizarReceitas();
-            renderizarAnalise();
-            renderizarDados();
+            renderizarDespesas(); renderizarAPagar(); renderizarReceitas();
+            renderizarAnalise(); renderizarDados();
             _mostrarStatus('Dados sincronizados do servidor ✓', 'success', 3000);
         }
     } catch (e) {
@@ -1659,17 +1685,18 @@ async function initFirebaseSync() {
     }
 
     // Carrega Firebase via CDN e inicializa
-    try {
-        // Injeta scripts Firebase via tag <script> (compatível sem type=module)
+try {
+        // Injeta scripts Firebase via tag <script>
         await new Promise((resolve, reject) => {
             const s = document.createElement('script');
             s.type = 'module';
             s.textContent = `
                 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
                 import { getFirestore, doc, setDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-                import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+                // Importamos as ferramentas de E-mail/Senha e Logout
+                import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-                window._firebaseAPI = { initializeApp, getFirestore, doc, setDoc, collection, getDocs, getAuth, signInAnonymously };
+                window._firebaseAPI = { initializeApp, getFirestore, doc, setDoc, collection, getDocs, getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged };
                 window.dispatchEvent(new Event('firebaseLoaded'));
             `;
             document.head.appendChild(s);
@@ -1677,27 +1704,48 @@ async function initFirebaseSync() {
             setTimeout(() => reject(new Error('Firebase timeout')), 10000);
         });
 
-        const { initializeApp, getFirestore, doc, setDoc, collection, getDocs, getAuth, signInAnonymously } = window._firebaseAPI;
+        const { initializeApp, getFirestore, doc, setDoc, collection, getDocs, getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } = window._firebaseAPI;
         window._firestoreApi = { doc, setDoc, collection, getDocs };
 
         const app  = initializeApp(window.FIREBASE_CONFIG);
         _db        = getFirestore(app);
         const auth = getAuth(app);
+        
+        // Guardamos a autenticação para a função fazerLogin usar depois
+        window._firebaseAuth = auth; 
 
-        // Auth anônimo para identificar o dispositivo/usuário
-        const cred = await signInAnonymously(auth);
-        _userId = cred.user.uid;
-        localStorage.setItem('_firebase_uid', _userId);
+        // O Observador Mágico: Avisa sempre que alguém entra ou sai
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Login feito!
+                _userId = user.uid;
+                localStorage.setItem('_firebase_uid', _userId);
+                console.info('Firebase conectado. Usuário:', user.email);
+                _mostrarStatus('Conectado como ' + user.email, 'success', 3000);
 
-        console.info('Firebase conectado. UID local:', _userId);
-        _mostrarStatus('Firebase conectado ✓', 'success', 3000);
+                // Esconde a tela de login e mostra o App
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
 
-        // Baixa dados do servidor e processa fila pendente usando o ID PARTILHADO
-        await _baixarDadosFirebase();
-        await _processarFilaPendente();
-        _atualizarIndicadorSync();
+                // Garante as datas atualizadas
+                const hoje = new Date();
+                _mesSel = hoje.getMonth(); _anoSel = hoje.getFullYear();
+                _atualizarHeaderMes(); _atualizarDataHoje();
 
-        // Listener de reconexão para re-tentar sync
+                // Baixa dados e renderiza
+                await _baixarDadosFirebase();
+                await _processarFilaPendente();
+                _atualizarIndicadorSync();
+                renderizarAnalise();
+            } else {
+                // Sem utilizador: garante que vemos a tela de login
+                _userId = null;
+                document.getElementById('app-screen').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+            }
+        });
+
+        // Listener de reconexão
         window.addEventListener('online', async () => {
             if (_db && _userId) {
                 await _processarFilaPendente();
@@ -1707,11 +1755,8 @@ async function initFirebaseSync() {
 
     } catch (e) {
         console.error('Erro ao inicializar Firebase:', e.message);
-        _mostrarStatus('Firebase indisponível – modo offline ativo. Dados salvos localmente.', 'warning', 5000);
+        _mostrarStatus('Firebase indisponível – modo offline ativo.', 'warning', 5000);
     }
-
-    _atualizarIndicadorSync();
-}
 
 // ==========================================
 // CONFIGURAÇÕES - adiciona seção Firebase
