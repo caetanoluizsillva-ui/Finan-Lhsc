@@ -810,13 +810,11 @@
 
 <div id="toast" class="toast hidden"></div>
 <!-- Configuração do Firebase: edite este arquivo para inserir suas chaves -->
-<!--
-  ORDEM OBRIGATÓRIA:
-  1. firebase-sync.js  — instala o interceptor Storage ANTES de tudo (sem defer)
-  2. firebase-config.js — inicia Firebase Auth em paralelo (async interno)
-  3. app.js + render.js — lógica do app
-  4. Chart.js — defer: não bloqueia nada, só precisa na aba Análise
--->
+<!-- ORDEM OBRIGATÓRIA DOS SCRIPTS:
+     1. firebase-sync.js  → instala interceptor Storage ANTES de tudo (sem defer)
+     2. firebase-config.js → inicia Firebase (async interno, não bloqueia)
+     3. app.js + render.js → lógica do app
+     4. Chart.js → defer, só precisa na aba Análise -->
 <script src="firebase-sync.js"></script>
 <script src="firebase-config.js"></script>
 <script src="app.js"></script>

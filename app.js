@@ -28,21 +28,21 @@ async function fazerLogin() {
         return;
     }
 
-    // Aguarda Firebase ficar pronto (caso ainda esteja carregando o SDK)
+    // Aguarda Firebase ficar pronto (comum em conexões lentas)
     if (!window._firebaseReady) {
-        if(err) { err.style.color = '#2980b9'; err.innerText = 'Conectando...'; }
-        if(btn) { btn.disabled = true; btn.innerText = 'Aguarde...'; }
-        await new Promise((resolve) => {
+        if(err) { err.style.color='#2980b9'; err.innerText='Conectando...'; }
+        if(btn) { btn.disabled=true; btn.innerText='Aguarde...'; }
+        await new Promise(resolve => {
             if (window._firebaseReady) return resolve();
             window.addEventListener('firebaseReady', resolve, { once: true });
-            setTimeout(resolve, 8000); // desiste após 8s
+            setTimeout(resolve, 8000);
         });
-        if(btn) { btn.disabled = false; btn.innerText = 'Entrar no Sistema'; }
+        if(btn) { btn.disabled=false; btn.innerText='Entrar no Sistema'; }
         if (!window._firebaseAPI) {
-            if(err) { err.style.color='#c0392b'; err.innerText='Sem conexão. Verifique sua internet.'; }
+            if(err) { err.style.color='#c0392b'; err.innerText='Sem conexão com o servidor.'; }
             return;
         }
-        if(err) err.innerText = '';
+        if(err) err.innerText='';
     }
 
     try {

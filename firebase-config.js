@@ -15,7 +15,7 @@ window.FIREBASE_ENABLED = true;
 
 (async function initFirebase() {
   try {
-    // Importa App + Auth em PARALELO — economiza ~600ms em toda conexão
+    // Importa App + Auth em paralelo (economiza ~600ms vs. await sequencial)
     const [
       { initializeApp },
       { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail }
@@ -27,37 +27,39 @@ window.FIREBASE_ENABLED = true;
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
+    // Expõe para app.js e firebase-sync.js
     window._firebaseApp  = app;
     window._firebaseAuth = auth;
     window._firebaseAPI  = { signInWithEmailAndPassword, signOut, sendPasswordResetEmail };
 
-    // Sinaliza que o Firebase está pronto (app.js aguarda isso)
+    // Dispara evento: app.js aguarda isso para liberar o botão de login
     window._firebaseReady = true;
     window.dispatchEvent(new Event('firebaseReady'));
 
-    // Status visual na tela de login
+    // Status visual
     const dot = document.getElementById('firebase-status-dot');
     const txt = document.getElementById('firebase-status-txt');
     if (dot) dot.style.color = '#27ae60';
-    if (txt) txt.textContent = 'Conectado';
+    if (txt) txt.textContent = 'Conectado ao Firebase';
 
     console.log('[Firebase] Pronto.');
 
-    // Monitora sessão: se já estiver logado, entra direto
+    // Monitora sessão
     onAuthStateChanged(auth, async (user) => {
       if (user) {
+        // Usuário logado → mostra app e inicia sync
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('app-screen').classList.remove('hidden');
-        // Inicia sync somente após login confirmado
         if (typeof iniciarSync === 'function') await iniciarSync(app);
       } else {
+        // Deslogado → mostra tela de login
         document.getElementById('app-screen').classList.add('hidden');
         document.getElementById('login-screen').classList.remove('hidden');
       }
     });
 
   } catch (err) {
-    console.error('[Firebase] Erro:', err);
+    console.error('[Firebase] Erro na inicialização:', err);
     const dot = document.getElementById('firebase-status-dot');
     const txt = document.getElementById('firebase-status-txt');
     if (dot) dot.style.color = '#e74c3c';
