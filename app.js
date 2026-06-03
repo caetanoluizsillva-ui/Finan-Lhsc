@@ -28,9 +28,30 @@ async function fazerLogin() {
         return;
     }
 
+    // Se o Firebase ainda está inicializando (comum em 3G),
+    // aguarda até 8 segundos antes de desistir
     if (!window._firebaseAPI || !window._firebaseAuth) {
-        if(err) err.innerText = 'Conectando ao servidor... tente novamente em 2 segundos.';
-        return;
+        if(err) { err.style.color = '#2980b9'; err.innerText = 'Aguardando conexão...'; }
+        if(btn) { btn.disabled = true; btn.innerText = 'Conectando...'; }
+        let tentativas = 0;
+        await new Promise((resolve) => {
+            const intervalo = setInterval(() => {
+                tentativas++;
+                if (window._firebaseAPI && window._firebaseAuth) {
+                    clearInterval(intervalo);
+                    resolve();
+                } else if (tentativas >= 16) { // 8 segundos (16 × 500ms)
+                    clearInterval(intervalo);
+                    resolve();
+                }
+            }, 500);
+        });
+        if (!window._firebaseAPI || !window._firebaseAuth) {
+            if(err) { err.style.color = '#c0392b'; err.innerText = 'Sem conexão com o servidor. Verifique sua internet.'; }
+            if(btn) { btn.disabled = false; btn.innerText = 'Entrar no Sistema'; }
+            return;
+        }
+        if(err) err.innerText = '';
     }
 
     try {
