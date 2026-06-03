@@ -5,13 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Financeiro LHSC</title>
     <link rel="stylesheet" href="style.css">
-
-    <!-- Preconnect: avisa o browser para abrir conexão antes de precisar -->
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
-
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2980b9">
@@ -815,12 +811,11 @@
 <div id="toast" class="toast hidden"></div>
 <!-- Configuração do Firebase: edite este arquivo para inserir suas chaves -->
 <!--
-  ORDEM CRÍTICA DOS SCRIPTS:
-  1. firebase-sync.js  — SEM defer: instala o interceptor no Storage.prototype
-                         ANTES de app.js e render.js rodarem
-  2. firebase-config.js — inicializa Firebase Auth (async, não bloqueia)
-  3. app.js / render.js — lógica do app (já encontra o interceptor instalado)
-  4. Chart.js           — defer: baixa em paralelo, só precisa quando abrir Análise
+  ORDEM OBRIGATÓRIA:
+  1. firebase-sync.js  — instala o interceptor Storage ANTES de tudo (sem defer)
+  2. firebase-config.js — inicia Firebase Auth em paralelo (async interno)
+  3. app.js + render.js — lógica do app
+  4. Chart.js — defer: não bloqueia nada, só precisa na aba Análise
 -->
 <script src="firebase-sync.js"></script>
 <script src="firebase-config.js"></script>
