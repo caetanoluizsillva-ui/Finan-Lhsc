@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Financeiro LHSC - Base Única</title>
+    <style>
+        /* ==========================================================================
+           1. ESTILOS GERAIS E RESET
+           ========================================================================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ==========================================================================
+           2. COMPONENTES DE INTERFACE (CARDS E BOTÕES)
+           ========================================================================== */
+        .card {
+            background: white;
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        h2, h3, h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: #f8fafc;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+            background-color: #fff;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-success {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 12px;
+            text-align: left;
+            min-height: 20px;
+        }
+
+        /* ==========================================================================
+           3. PAINEL DO APP / DASHBOARD DE SINCRONIZAÇÃO
+           ========================================================================== */
+        .dashboard-container {
+            max-width: 650px;
+            width: 100%;
+            background: white;
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .header-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .status-box {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 4px solid #3498db;
+            text-align: left;
+        }
+
+        .indicator-group {
+            display: flex;
+            align-items: center;
+            margin-top: 6px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            background-color: #94a3b8;
+            display: inline-block;
+        }
+
+        .test-box {
+            background-color: #f0fdf4;
+            border: 1px dashed #2ecc71;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .test-box p {
+            font-size: 14px;
+            color: #1e293b;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        /* Lista de Itens Sincronizados */
+        .list-section {
+            text-align: left;
+        }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .badge {
+            background: #e2e8f0;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .items-list {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            max-height: 280px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-info strong {
+            color: #2c3e50;
+        }
+
+        .item-info span {
+            font-size: 12px;
+            color: #64748b;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .item-value {
+            font-weight: 700;
+            color: #e74c3c;
+        }
+
+        .empty-state {
+            color: #94a3b8;
+            text-align: center;
+            font-size: 14px;
+            padding: 30px 10px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==========================================================================
+       TELA 1: FORMULÁRIO DE LOGIN
+       ========================================================================== -->
+    <div id="login-screen" class="card">
+        <h2>Finanças LHSC</h2>
+        <p style="color: #64748b; font-size: 14px; margin-top: -15px; margin-bottom: 25px;">Acesse sua conta para sincronizar</p>
+        
+        <div class="input-group">
+            <label for="email">E-mail</label>
+            <input type="email" id="email" placeholder="exemplo@email.com" autocomplete="email">
+        </div>
+        
+        <div class="input-group">
+            <label for="password">Senha</label>
+            <input type="password" id="password" placeholder="Sua senha secreta" autocomplete="current-password">
+        </div>
+        
+        <button id="btn-login" class="btn-primary">Entrar no Sistema</button>
+        <div id="login-error" class="error-message"></div>
+        
+        <div class="indicator-group" style="justify-content: center; border-top: 1px solid #f1f5f9; padding-top: 15px; margin-top: 15px;">
+            <div id="db-status-dot" class="status-dot"></div>
+            <span id="db-status-txt" style="font-size: 12px; color: #64748b;">Conectando ao Firebase SDK...</span>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+       TELA 2: PAINEL DE CONTROLE DA COLECÃO (APLICATIVO)
+       ========================================================================== -->
+    <div id="app-screen" class="dashboard-container hidden">
+        <div class="header-panel">
+            <div>
+                <h3>Painel de Sincronização</h3>
+                <span id="user-email" style="font-size: 13px; color: #64748b;">usuario@email.com</span>
+            </div>
+            <button id="btn-logout" class="btn-danger" style="width: auto; padding: 8px 18px; font-size: 14px;">Sair</button>
+        </div>
+
+        <!-- Feedback de Sincronização em Tempo Real -->
+        <div class="status-box">
+            <h4 style="font-size: 15px; margin-bottom: 2px;">Sincronização Multidispositivo Ativa</h4>
+            <div class="indicator-group">
+                <div id="sync-status-dot" class="status-dot"></div>
+                <span id="sync-status-txt">Aguardando dados...</span>
+            </div>
+        </div>
+
+        <!-- Área Didática: Testar Envio Manual por Ficha -->
+        <div class="test-box">
+            <h4>Fichas de Teste (Documentos Independentes)</h4>
+            <p>
+                Clique no botão abaixo para simular a criação de uma nova despesa. Cada clique gera uma despesa com ID exclusivo que é injetada diretamente na sua <strong>Coleção Individual</strong> no Firebase. Abra esta mesma página noutro dispositivo/aba para ver os dados surgirem instantaneamente!
+            </p>
+            <button id="btn-add-test" class="btn-success">➕ Inserir Documento na Coleção</button>
+        </div>
+
+        <!-- Lista de Despesas em Tempo Real -->
+        <div class="list-section">
+            <div class="list-header">
+                <h4>Documentos em 'despesas_gastos'</h4>
+                <span id="count-despesas" class="badge">0 itens</span>
+            </div>
+            <div id="despesas-lista" class="items-list">
+                <div class="empty-state">Nenhum dado recebido ainda.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+       4. LÓGICA CORE: CONFIGURAÇÃO MODULAR DO FIREBASE V10
+       ========================================================================== -->
+    <script type="module">
+        // Importamos os SDKs oficiais e modulares do Firebase via CDN do Google
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // Configurações do seu projeto Firebase original (mantidas para integridade)
+        const firebaseConfig = {
+            apiKey           : "AIzaSyApdn5OqDXkckc4vzsY2fFfgZT0AWw139s",
+            authDomain       : "finan-lhsc.firebaseapp.com",
+            projectId        : "finan-lhsc",
+            storageBucket    : "finan-lhsc.firebasestorage.app",
+            messagingSenderId: "7930639364",
+            appId            : "1:7930639364:web:7a2e6865a4a78db5bcb151"
+        };
+
+        // Inicialização Global das instâncias
+        let app, auth, db;
+        let unsubscribes = []; // Guarda listeners para cancelamento limpo no logout
+
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            
+            // Sucesso na inicialização do script
+            document.getElementById('db-status-dot').style.backgroundColor = '#2ecc71';
+            document.getElementById('db-status-txt').innerText = 'SDK do Firebase Pronto';
+        } catch (error) {
+            console.error("Erro crítico na carga do Firebase:", error);
+            document.getElementById('db-status-dot').style.backgroundColor = '#e74c3c';
+            document.getElementById('db-status-txt').innerText = 'Falha ao iniciar SDK';
+        }
+
+        // ==========================================================================
+        // 5. MONITORIZAÇÃO DA SESSÃO (AUTH STATE)
+        // ==========================================================================
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Utilizador Autenticado → Alternar Interface
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                document.getElementById('user-email').innerText = user.email;
+                
+                // Ativar escuta em tempo real baseada em Coleções isoladas por UID
+                ativarEscutaEmTempoReal(user.uid);
+            } else {
+                // Utilizador Deslogado → Travar telas e limpar Listeners
+                document.getElementById('app-screen').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('login-error').innerText = '';
+                
+                // Desativa os ouvintes do Firestore para evitar consumo desnecessário de rede
+                unsubscribes.forEach(unsub => unsub());
+                unsubscribes = [];
+            }
+        });
+
+        // ==========================================================================
+        // 6. SISTEMA DE SINCRONIZAÇÃO EM TEMPO REAL POR COLECÕES
+        // ==========================================================================
+        function ativarEscutaEmTempoReal(uid) {
+            atualizarIndicadorSync('salvando', 'Conectando ao fluxo de dados...');
+            
+            // Estrutura profissional: usuarios -> {ID_DO_USUARIO} -> {NOME_DA_COLECAO}
+            // Isto garante isolamento total e resolve conflitos multidispositivos por completo!
+            const caminhoColecao = `usuarios/${uid}/despesas_gastos`;
+            const refColecao = collection(db, caminhoColecao);
+
+            // Criamos o canal aberto em tempo real (onSnapshot) com a gaveta/coleção inteira
+            const unsub = onSnapshot(refColecao, (snapshot) => {
+                const listaAtualizada = [];
+                
+                // Mapeamos cada documento indepedente que está dentro da subcoleção
+                snapshot.forEach((documento) => {
+                    listaAtualizada.push(documento.data());
+                });
+
+                // 1. Atualiza o cache local imediatamente para consistência rápida offline
+                localStorage.setItem('despesas_gastos', JSON.stringify(listaAtualizada));
+                
+                // 2. Renderiza os blocos atualizados no visor do utilizador
+                atualizarInterfaceLista(listaAtualizada);
+                atualizarIndicadorSync('ok', 'Dispositivos Sincronizados');
+            }, (error) => {
+                console.error("Erro interno no canal de sincronização:", error);
+                atualizarIndicadorSync('erro', 'Falha ao receber dados em nuvem');
+            });
+
+            // Guardamos a referência do canal para poder fechá-la no logout
+            unsubscribes.push(unsub);
+        }
+
+        // ==========================================================================
+        // 7. ENVIO DE DOCUMENTOS DE FORMA ISOLADA (SEM SUBSTUIÇÃO DE ARRAYS)
+        // ==========================================================================
+        async function enviarFichaIndividualFirestore(nomeColecao, dadosItem) {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            try {
+                atualizarIndicadorSync('salvando', 'Propagando alteração...');
+                
+                // Apontamos diretamente para o ID da ficha específica dentro da coleção
+                const caminhoDocumento = `usuarios/${user.uid}/${nomeColecao}`;
+                const refDocumento = doc(db, caminhoDocumento, dadosItem.id);
+
+                // setDoc com { merge: true } garante atualização inteligente sem perda de dados
+                await setDoc(refDocumento, dadosItem, { merge: true });
+            } catch (error) {
+                console.error("Erro ao gravar documento individual:", error);
+                atualizarIndicadorSync('erro', 'Falha no upload do item');
+            }
+        }
+
+        // ==========================================================================
+        // 8. GERENCIADORES DE EVENTO DE INTERFACE
+        // ==========================================================================
+
+        // Evento: Executar Login Seguro
+        document.getElementById('btn-login').addEventListener('click', async () => {
+            const email = document.getElementById('email').value.trim();
+            const pass = document.getElementById('password').value;
+            const erroContainer = document.getElementById('login-error');
+            const btn = document.getElementById('btn-login');
+
+            if (!email || !pass) {
+                erroContainer.innerText = "Por favor, digite o e-mail e a senha.";
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerText = "Autenticando...";
+                erroContainer.innerText = "";
+                
+                // Chamada oficial da API de Autenticação
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (error) {
+                console.error("Falha no login do utilizador:", error);
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                    erroContainer.innerText = "Credenciais inválidas. Verifique os campos.";
+                } else if (error.code === 'auth/invalid-email') {
+                    erroContainer.innerText = "Formato de e-mail incorreto.";
+                } else {
+                    erroContainer.innerText = `Erro operacional: ${error.message}`;
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Entrar no Sistema";
+            }
+        });
+
+        // Evento: Executar LogOut
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        // Evento: Inserir Documento Aleatório para Teste Multidispositivo
+        document.getElementById('btn-add-test').addEventListener('click', () => {
+            const despesasFicticias = [
+                { desc: 'Almoço Executivo', val: 32.90 },
+                { desc: 'Abastecimento Carro', val: 150.00 },
+                { desc: 'Supermercado Mensal', val: 425.30 },
+                { desc: 'Assinatura Software', val: 59.90 },
+                { desc: 'Café e Lanche', val: 14.50 }
+            ];
+            
+            const aleatorio = despesasFicticias[Math.floor(Math.random() * despesasFicticias.length)];
+            
+            // Criamos uma estrutura limpa com IDs únicos gerados por timestamp e hash aleatório
+            const novaFicha = {
+                id: 'id_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now(),
+                descricao: aleatorio.desc + " (Ficha única)",
+                valor: aleatorio.val,
+                data: new Date().toISOString().split('T')[0],
+                timestampCriacao: Date.now()
+            };
+
+            // Injeta apenas este objeto isolado. Nenhum array é modificado na gravação!
+            enviarFichaIndividualFirestore('despesas_gastos', novaFicha);
+        });
+
+        // ==========================================================================
+        // 9. FUNÇÕES DE SUPORTE E RENDERIZAÇÃO
+        // ==========================================================================
+        function atualizarInterfaceLista(dados) {
+            const listaContainer = document.getElementById('despesas-lista');
+            document.getElementById('count-despesas').innerText = `${dados.length} itens`;
+
+            if (dados.length === 0) {
+                listaContainer.innerHTML = '<div class="empty-state">Nenhum dado recebido ainda. Adicione itens para testar!</div>';
+                return;
+            }
+
+            // Ordena os documentos recebidos por ordem de criação (mais recentes no topo)
+            dados.sort((a, b) => (b.timestampCriacao || 0) - (a.timestampCriacao || 0));
+
+            listaContainer.innerHTML = dados.map(item => `
+                <div class="item-row">
+                    <div class="item-info">
+                        <strong>${item.descricao}</strong>
+                        <span>ID Documento: ${item.id}</span>
+                        <span>Data: ${item.data}</span>
+                    </div>
+                    <div class="item-value">R$ ${Number(item.valor).toFixed(2)}</div>
+                </div>
+            `).join('');
+        }
+
+        function atualizarIndicadorSync(status, texto) {
+            const paletaCores = { ok: '#2ecc71', salvando: '#f39c12', erro: '#e74c3c' };
+            const dot = document.getElementById('sync-status-dot');
+            const txt = document.getElementById('sync-status-txt');
+            if (dot) dot.style.backgroundColor = paletaCores[status] || '#94a3b8';
+            if (txt) txt.textContent = texto;
+        }
+    </script>
+</body>
+</html>
